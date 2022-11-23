@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "355404911648",
+    "project_id": "bl-zap",
+    "storage_bucket": "bl-zap.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:355404911648:android:300397e359af5fa66bd845",
+        "android_client_info": {
+          "package_name": "com.blzap"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "355404911648-ps83ku9pcu5d00ura6ip5momtgddeb0g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjkF2eaZk4MJVlkvw8-Qzx9I_kiMNXsbg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "355404911648-ps83ku9pcu5d00ura6ip5momtgddeb0g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
