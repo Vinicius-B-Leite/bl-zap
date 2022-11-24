@@ -1,13 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Button, View, TouchableOpacity, SafeAreaView, Text, StyleSheet, FlatList } from 'react-native';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { Button, View, TouchableOpacity, SafeAreaView, Text, StyleSheet, FlatList, Modal, TextInput } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import Entypo from 'react-native-vector-icons/Entypo'
+import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
+import ModalAddChat from '../../components/ModalAddChat';
 
 
 
 export default function ChatRoom({ navigation }) {
     const [chats, setChats] = useState([])
+    const [modalodalAddChatt, setModalAddChat] = useState(false)
 
     function handleLogout() {
         auth().signOut().then(() => {
@@ -15,34 +19,35 @@ export default function ChatRoom({ navigation }) {
         })
     }
 
-    function handleChat(nome, id){
-        if (auth().currentUser){
-            navigation.navigate('Chat', {nome, id})
-        }else{
+    function handleChat(nome, id) {
+        if (auth().currentUser) {
+            navigation.navigate('Chat', { nome, id })
+        } else {
             navigation.navigate('SingIn')
         }
     }
-    useEffect(() => {
+    useLayoutEffect(
+        useCallback(() => {
 
-        async function getChats() {
-            let data = await firestore()
-                .collection('chats')
-                .where('integrantes', 'array-contains', 'vinicius')
-                .get()
-            setChats([])
-            data.docs.forEach(i => {
-                let data = {
-                    ...i.data(),
-                    id: i.id
-                }
-                setChats(oldChat => [...oldChat, data])
-            })
-
-        }
-
-
-        getChats()
-    }, [])
+            async function getChats() {
+                let data = await firestore()
+                    .collection('chats')
+                    .where('integrantes', 'array-contains', auth().currentUser.toJSON().uid)
+                    .get()
+                setChats([])
+                data.docs.forEach(i => {
+                    let data = {
+                        ...i.data(),
+                        id: i.id
+                    }
+                    setChats(oldChat => [...oldChat, data])
+                })
+    
+            }
+    
+            getChats()
+        }, [])
+    )
 
     return (
         <SafeAreaView style={styles.container}>
@@ -50,20 +55,25 @@ export default function ChatRoom({ navigation }) {
                 <View style={styles.headerLeft}>
                     {
                         auth().currentUser && (
-                            <TouchableOpacity onPress={handleLogout}>
-                                <MaterialIcons name='arrow-back' size={23} color='#fff' />
+                            <TouchableOpacity onPress={handleLogout} style={{ transform: [{ rotate: '180deg' }] }}>
+                                <MaterialIcons name='logout' size={23} color='#fff' />
                             </TouchableOpacity>
                         )
                     }
-                    <Text style={styles.title}>BL ZAP</Text>
+                    <Text style={styles.title}>BL</Text><Text style={styles.subTitle}>zap</Text>
                 </View>
-                <TouchableOpacity>
-                    <MaterialIcons name='search' size={28} color='#fff' />
-                </TouchableOpacity>
+                <View style={styles.headerRight}>
+                    <TouchableOpacity onPress={() => setModalAddChat(true)}>
+                        <Entypo name='chat' size={25} color='#d3d3d3' />
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                        <FontAwesome name='user-circle-o' size={25} color='#d3d3d3' />
+                    </TouchableOpacity>
+                </View>
             </View>
             <FlatList
                 style={{ marginTop: '5%' }}
-                contentContainerStyle={{paddingHorizontal: '5%'}}
+                contentContainerStyle={{ paddingHorizontal: '5%' }}
                 data={chats}
                 renderItem={({ item }) => (
                     <TouchableOpacity style={styles.chatCard} onPress={() => handleChat(item.nome, item.id)}>
@@ -71,6 +81,8 @@ export default function ChatRoom({ navigation }) {
                     </TouchableOpacity>
                 )}
             />
+
+            {modalodalAddChatt && <ModalAddChat visible={modalodalAddChatt} closeModal={() => setModalAddChat(false)}/>}
         </SafeAreaView>
     );
 }
@@ -84,10 +96,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '7%',
+        padding: '6%',
         backgroundColor: '#080808',
-        borderBottomRightRadius: 20,
-        borderBottomLeftRadius: 20
     },
     headerLeft: {
         flexDirection: 'row',
@@ -99,9 +109,20 @@ const styles = StyleSheet.create({
         color: '#48CAE4',
         paddingLeft: 10
     },
+    subTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        paddingLeft: 10
+    },
     chatCard: {
         backgroundColor: '#080808',
         padding: '5%',
         borderRadius: 12
+    },
+    headerRight: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        width: '25%' 
     }
 })
