@@ -22,7 +22,11 @@ export default function AppRoutes() {
                 component={Singin}
                 name='SingIn'
                 options={{
-                    title: 'Faça o login'
+                    title: 'Faça o login',
+                    headerStyle:{
+                        backgroundColor: '#080808'
+                    },
+                    headerTintColor: '#fff'
                 }} />
 
             <Stack.Screen

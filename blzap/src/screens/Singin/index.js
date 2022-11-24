@@ -33,7 +33,7 @@ export default function Singin({ navigation }) {
     return (
         <SafeAreaView style={styles.conteiner}>
             <Text style={styles.logo} >BL Zap</Text>
-            <Text style={{color: '#000'}} >Ajude, colabore e faça networking!</Text>
+            <Text style={{color: '#fff'}} >Ajude, colabore e faça networking!</Text>
 
 
             {
@@ -65,14 +65,14 @@ export default function Singin({ navigation }) {
             />
 
             <TouchableOpacity 
-                style={[styles.btn, {backgroundColor: type ? '#f53757' :  '#121212'}]}
+                style={[styles.btn, {backgroundColor: type ? '#000' :  '#080808'}]}
                 onPress={handleLogin}    
             >
                 <Text style={styles.txtBtn}>{type ? 'Cadastrar' : 'Acessar'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setType(!type)}>
-                <Text style={{color: '#000'}}>{type ? 'Já possuo uma conta' : 'Criar nova conta'}</Text>
+                <Text style={{color: '#fff'}}>{type ? 'Já possuo uma conta' : 'Criar nova conta'}</Text>
             </TouchableOpacity>
 
         </SafeAreaView>
@@ -83,22 +83,23 @@ const styles = StyleSheet.create({
     conteiner: {
         flex: 1,
         alignItems: 'center',
-        backgroundColor: '#fff'
+        backgroundColor: '#121212'
     },
     logo: {
         marginTop: 55,
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#000'
+        color: '#fff'
     },
     input: {
         color: '#121212',
-        backgroundColor: '#ebebeb',
+        backgroundColor: '#080808',
         width: '90%',
         borderRadius: 6,
         marginBottom: 10,
         paddingHorizontal: 8,
-        height: 50
+        height: 50,
+        color: '#fff'
     },
     btn:{
         width: '90%',
