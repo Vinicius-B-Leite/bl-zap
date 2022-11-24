@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button, View, TouchableOpacity, SafeAreaView, Text, StyleSheet, FlatList, Modal, TextInput } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
@@ -6,12 +6,15 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
 import ModalAddChat from '../../components/ModalAddChat';
+import { useFocusEffect } from '@react-navigation/native';
+import ModalChangePhoto from '../../components/ModalChangePhoto';
 
 
 
 export default function ChatRoom({ navigation }) {
     const [chats, setChats] = useState([])
     const [modalodalAddChatt, setModalAddChat] = useState(false)
+    const [modalProfile, setModalProfile] = useState(false)
 
     function handleLogout() {
         auth().signOut().then(() => {
@@ -26,7 +29,7 @@ export default function ChatRoom({ navigation }) {
             navigation.navigate('SingIn')
         }
     }
-    useLayoutEffect(
+    useFocusEffect(
         useCallback(() => {
 
             async function getChats() {
@@ -66,7 +69,7 @@ export default function ChatRoom({ navigation }) {
                     <TouchableOpacity onPress={() => setModalAddChat(true)}>
                         <Entypo name='chat' size={25} color='#d3d3d3' />
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => setModalProfile(true)}>
                         <FontAwesome name='user-circle-o' size={25} color='#d3d3d3' />
                     </TouchableOpacity>
                 </View>
@@ -83,6 +86,7 @@ export default function ChatRoom({ navigation }) {
             />
 
             {modalodalAddChatt && <ModalAddChat visible={modalodalAddChatt} closeModal={() => setModalAddChat(false)}/>}
+            {modalProfile && <ModalChangePhoto visible={modalProfile} closeModal={() => setModalProfile(false)}/>}
         </SafeAreaView>
     );
 }
