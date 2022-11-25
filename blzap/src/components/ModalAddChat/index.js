@@ -17,11 +17,17 @@ export default function ModalAddChat({ visible, closeModal }) {
 
 
         let data = doc.docs.map(i => (i.data()))[0]
-        let uid = auth().currentUser.toJSON().uid
-        
-        await firestore().collection('chats').doc(data.id).update({integrantes: [...data.integrantes, uid]})
-        setCode('')
-        closeModal()
+
+        if (!data.integrantes.includes(auth().currentUser.uid)) {
+
+            let uid = auth().currentUser.toJSON().uid
+            
+            await firestore().collection('chats').doc(data.id).update({integrantes: [...data.integrantes, uid]})
+            setCode('')
+            closeModal()
+
+        }
+
     }
 
     return (

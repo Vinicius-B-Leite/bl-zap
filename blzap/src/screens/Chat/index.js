@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, View, TouchableOpacity, TextInput, Image } from 'react-native';
 
 import Feather from 'react-native-vector-icons/Feather'
@@ -11,8 +11,6 @@ export default function Chat({ route }) {
     const navigation = useNavigation()
     const [msgs, setMsgs] = useState([])
     const [newMsg, setNewMsg] = useState('')
-    const photouri = auth().currentUser.toJSON().photoURL
-    const userName = auth().currentUser.toJSON().displayName
 
     useEffect(() => {
 
@@ -25,7 +23,7 @@ export default function Chat({ route }) {
                 setMsgs([])
 
                 snapshotQuery.docs.forEach(doc => {
-                    setMsgs(oldD => [...oldD, doc.data()])
+                    setMsgs(oldD => [...oldD, { ...doc.data(), id: doc.id }])
                 })
             })
 
@@ -34,8 +32,16 @@ export default function Chat({ route }) {
     }, [])
 
     function sendMessage() {
-        firestore().collection('chats').doc(route.params.id).collection('mensagens').add({ autor: auth().currentUser.toJSON().displayName, texto: newMsg, hora: new Date() })
-            .finally(() => setNewMsg(''))
+        setNewMsg('')
+        firestore()
+            .collection('chats')
+            .doc(route.params.id)
+            .collection('mensagens')
+            .add({
+                texto: newMsg,
+                hora: new Date(),
+                uid: auth().currentUser.uid,
+            })
     }
 
     return (
@@ -50,22 +56,7 @@ export default function Chat({ route }) {
                 inverted={true}
                 data={msgs}
                 style={{ flex: 1, padding: '5%' }}
-                renderItem={({ item }) => (
-                    <View style={
-                        [styles.mensagem, { justifyContent: userName == item.autor ? 'flex-end' : 'flex-start',  marginVertical: userName !== item.autor ? 10 : 0}]}>
-                        {
-                            userName !== item.autor &&
-                            (<Image
-                                source={{ uri: !!photouri ? photouri : 'https://www.showmetech.com.br/wp-content/uploads//2021/02/capa-dog-1920x1024.jpg' }}
-                                style={styles.img}
-                            />)
-                        }
-                        <View>
-                            {auth().currentUser.toJSON().displayName !== item.autor && <Text style={styles.owner}>{item.autor}</Text>}
-                            <Text>{item.texto}</Text>
-                        </View>
-                    </View>
-                )}
+                renderItem={({ item }) => <Item item={item} />}
             />
 
             <View style={styles.inpContainer}>
@@ -77,12 +68,53 @@ export default function Chat({ route }) {
                     placeholderTextColor='#d3d3d3'
                     onEndEditing={sendMessage}
                 />
-                <TouchableOpacity>
+                <TouchableOpacity onPress={sendMessage}>
                     <Feather name='send' size={20} color='#48CAE4' />
                 </TouchableOpacity>
             </View>
         </View>
     );
+}
+
+
+function Item({ item }) {
+
+    const [isMyMessage, setIsMyMessage] = useState(true)
+    const [owner, setOwner] = useState('')
+    const [photo, setPhoto] = useState('https://img.favpng.com/7/5/8/computer-icons-font-awesome-user-font-png-favpng-YMnbqNubA7zBmfa13MK8WdWs8.jpg')
+
+    useLayoutEffect(() => {
+
+        setIsMyMessage(item.uid == auth().currentUser.toJSON().uid)
+
+
+        firestore().collection('users').doc(item.uid).get().then(documentSnapshot => {
+            console.log("🚀 ~ file: index.js ~ line 89 ~ firestore ~ documentSnapshot", documentSnapshot.data())
+            setOwner(documentSnapshot.data().nome)
+            setPhoto(documentSnapshot.data().foto)
+        })
+    }, [item])
+
+
+    return (
+        <View style={
+            [styles.mensagem, {
+                justifyContent: isMyMessage ? 'flex-end' : 'flex-start',
+                marginVertical: isMyMessage ? 2 : 10
+            }]}>
+            {
+                !isMyMessage &&
+                (<Image
+                    source={{ uri: photo}}
+                    style={styles.img}
+                />)
+            }
+            <View>
+                {!isMyMessage && <Text style={styles.owner}>{owner}</Text>}
+                <Text>{item.texto}</Text>
+            </View>
+        </View>
+    )
 }
 
 const styles = StyleSheet.create({
@@ -108,7 +140,7 @@ const styles = StyleSheet.create({
         width: '100%',
         flexDirection: 'row',
         alignItems: 'center',
-        
+
     },
     inp: {
     },
@@ -124,14 +156,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15
     },
     img: {
-        width: 30, 
+        width: 30,
         height: 30,
         marginRight: 10,
         borderRadius: 15,
         resizeMode: 'cover'
 
     },
-    owner:{
+    owner: {
         color: '#48CAE4'
     }
 })
