@@ -12,9 +12,9 @@ import firestore from '@react-native-firebase/firestore'
 export default function ModalChangePhoto({ visible, closeModal }) {
 
     const [photo, setPhoto] = useState(auth().currentUser.toJSON().photoURL)
-    const [newName, setNewName] = useState(null)
-    const [newEmail, setNewEmail] = useState(null)
-    const [newPassword, setNewPassword] = useState(null)
+    const [newName, setNewName] = useState('')
+    const [newEmail, setNewEmail] = useState('')
+    const [newPassword, setNewPassword] = useState('')
     const [newPhoto, setNewPhoto] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
 
@@ -40,23 +40,27 @@ export default function ModalChangePhoto({ visible, closeModal }) {
         let downloadURL = await ref.getDownloadURL()
         await auth().currentUser.updateProfile({ photoURL: downloadURL })
         await firestore()
-                .collection('users')
-                .doc(auth().currentUser.toJSON().uid)
-                .update({ foto: downloadURL })
+            .collection('users')
+            .doc(auth().currentUser.toJSON().uid)
+            .update({ foto: downloadURL })
     }
 
     async function saveAll() {
         setIsLoading(true)
-        if (newName) {
+
+        if (newName !== '') {
             await auth().currentUser.updateProfile({ displayName: newName })
             await firestore()
                 .collection('users')
                 .doc(auth().currentUser.toJSON().uid)
                 .update({ nome: newName })
         }
-        if (newEmail) await auth().currentUser.updateEmail(newEmail)
-        if (newPassword) await auth().currentUser.updatePassword(newEmail)
+
+        if (newEmail !== '' && newName === '' && !newPhoto) alert('Essa função ainda está em desenvolvimento')
+        if (newPassword !== '' && newName === '' && !newPhoto) alert('Essa função ainda está em desenvolvimento')
         if (newPhoto) await updatePhoto(newPhoto)
+
+
         setIsLoading(false)
         closeModal()
     }

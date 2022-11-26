@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity, SafeAreaView, Text, StyleSheet, FlatList } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
@@ -7,14 +7,16 @@ import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
 import ModalAddChat from '../../components/ModalAddChat';
 import { useNavigation } from '@react-navigation/native';
-import ModalChangePhoto from '../../components/ModalChangePhoto';
-
+import ModalChangePhoto from '../../components/ModalProfile';
+import Ionicons from 'react-native-vector-icons/Ionicons'
+import ModalCreateChat from '../../components/ModalCreateChat';
 
 
 export default function ChatRoom({ navigation }) {
     const [chats, setChats] = useState([])
     const [modalodalAddChatt, setModalAddChat] = useState(false)
     const [modalProfile, setModalProfile] = useState(false)
+    const [createChatModal, setCreateChatModal] = useState(false)
     let isUserLogged = !!auth().currentUser
 
 
@@ -26,7 +28,6 @@ export default function ChatRoom({ navigation }) {
     }
 
 
-
     useEffect(() => {
 
         async function getGlobalChat() {
@@ -36,10 +37,11 @@ export default function ChatRoom({ navigation }) {
                 ...data.data(),
                 id: data.id
             }
-            setChats(oldChat => [...oldChat, newData])
+            return newData
         }
 
         async function getChats() {
+            var chatsData = [await getGlobalChat()]
             if (isUserLogged) {
                 let data = await firestore()
                     .collection('chats')
@@ -50,15 +52,15 @@ export default function ChatRoom({ navigation }) {
                         ...i.data(),
                         id: i.id
                     }
-                    setChats(oldChat => [...oldChat, data])
+                    chatsData.push(data)
                 })
+
+                setChats(chatsData)
             }
 
         }
-        getGlobalChat().then(() => {
-            getChats()
-        })
-    }, [modalodalAddChatt, modalProfile])
+        getChats()
+    }, [modalodalAddChatt, createChatModal])
 
     return (
         <SafeAreaView style={styles.container}>
@@ -89,7 +91,13 @@ export default function ChatRoom({ navigation }) {
                 renderItem={({ item }) => <Item item={item} />}
             />
 
+            <TouchableOpacity style={styles.createChat} onPress={() => setCreateChatModal(true)}>
+                <Ionicons name='add-circle' color='#48CAE4' size={70} />
+            </TouchableOpacity>
+
+
             {modalodalAddChatt && isUserLogged && <ModalAddChat visible={modalodalAddChatt} closeModal={() => setModalAddChat(false)} />}
+            {createChatModal && isUserLogged && <ModalCreateChat visible={createChatModal} closeModal={() => setCreateChatModal(false)} />}
             {modalProfile && isUserLogged && <ModalChangePhoto visible={modalProfile} closeModal={() => setModalProfile(false)} />}
         </SafeAreaView>
     );
@@ -152,5 +160,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         width: '25%'
+    },
+    createChat:{
+        position: 'absolute',
+        right: '5%',
+        bottom: '3%',
     }
 })
