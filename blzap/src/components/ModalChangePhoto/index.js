@@ -52,7 +52,7 @@ export default function ModalChangePhoto({ visible, closeModal }) {
             await firestore()
                 .collection('users')
                 .doc(auth().currentUser.toJSON().uid)
-                .updateProfile({ displayName: newName })
+                .update({ nome: newName })
         }
         if (newEmail) await auth().currentUser.updateEmail(newEmail)
         if (newPassword) await auth().currentUser.updatePassword(newEmail)

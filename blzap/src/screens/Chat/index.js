@@ -20,11 +20,12 @@ export default function Chat({ route }) {
             .collection('mensagens')
             .orderBy('hora', 'desc')
             .onSnapshot((snapshotQuery) => {
-                setMsgs([])
+                const msg = []
 
                 snapshotQuery.docs.forEach(doc => {
-                    setMsgs(oldD => [...oldD, { ...doc.data(), id: doc.id }])
+                    msg.push({ ...doc.data(), id: doc.id })
                 })
+                setMsgs(msg)
             })
 
 
@@ -32,22 +33,24 @@ export default function Chat({ route }) {
     }, [])
 
     function sendMessage() {
-        setNewMsg('')
-        firestore()
-            .collection('chats')
-            .doc(route.params.id)
-            .collection('mensagens')
-            .add({
-                texto: newMsg,
-                hora: new Date(),
-                uid: auth().currentUser.uid,
-            })
+        if (newMsg.length > 0) {
+            setNewMsg('')
+            firestore()
+                .collection('chats')
+                .doc(route.params.id)
+                .collection('mensagens')
+                .add({
+                    texto: newMsg,
+                    hora: new Date(),
+                    uid: auth().currentUser.uid,
+                })
+        }
     }
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
+                <TouchableOpacity onPress={() => navigation.navigate('ChatRoom')}>
                     <Text style={styles.backButton}>{'<'}</Text>
                 </TouchableOpacity>
                 <Text style={styles.title}>{route.params.nome}</Text>
@@ -83,17 +86,16 @@ function Item({ item }) {
     const [owner, setOwner] = useState('')
     const [photo, setPhoto] = useState('https://img.favpng.com/7/5/8/computer-icons-font-awesome-user-font-png-favpng-YMnbqNubA7zBmfa13MK8WdWs8.jpg')
 
-    useLayoutEffect(() => {
+    useEffect(() => {
 
         setIsMyMessage(item.uid == auth().currentUser.toJSON().uid)
 
 
         firestore().collection('users').doc(item.uid).get().then(documentSnapshot => {
-            console.log("🚀 ~ file: index.js ~ line 89 ~ firestore ~ documentSnapshot", documentSnapshot.data())
-            setOwner(documentSnapshot.data().nome)
-            setPhoto(documentSnapshot.data().foto)
+            setOwner(documentSnapshot?.data()?.nome)
+            setPhoto(documentSnapshot?.data()?.foto)
         })
-    }, [item])
+    }, [])
 
 
     return (
@@ -105,7 +107,7 @@ function Item({ item }) {
             {
                 !isMyMessage &&
                 (<Image
-                    source={{ uri: photo}}
+                    source={{ uri: photo }}
                     style={styles.img}
                 />)
             }

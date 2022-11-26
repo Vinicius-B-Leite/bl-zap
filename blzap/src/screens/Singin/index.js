@@ -16,7 +16,8 @@ export default function Singin({ navigation }) {
         await auth().createUserWithEmailAndPassword(email, password)
             .then(({ user }) => {
                 user.updateProfile({
-                    displayName: name
+                    displayName: name,
+                    photoURL: 'https://img.favpng.com/7/5/8/computer-icons-font-awesome-user-font-png-favpng-YMnbqNubA7zBmfa13MK8WdWs8.jpg'
                 }).then(() => {
                     navigation.goBack()
                 })
@@ -30,22 +31,15 @@ export default function Singin({ navigation }) {
             .set({
                 nome: name,
                 email: email,
-                foto: ''
+                foto: 'https://img.favpng.com/7/5/8/computer-icons-font-awesome-user-font-png-favpng-YMnbqNubA7zBmfa13MK8WdWs8.jpg'
             })
     }
 
-    async function addUserOnGlobalChat(){
-        let data = await firestore().collection('chats').doc('lOOVcwIl5VzV2rYD0VbX').get()
-
-        await firestore().collection('chats').doc('lOOVcwIl5VzV2rYD0VbX').update({integrantes: [...data.data().integrantes, auth().currentUser.toJSON().uid]})
-        
-    }
     async function handleLogin() {
         if (type) {
             if (name === '' || email === '' || password === '') return
             await addUser()
             await addUserOnFirestore()
-            await addUserOnGlobalChat()
 
         } else {
             auth().signInWithEmailAndPassword(email, password)

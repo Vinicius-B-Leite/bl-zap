@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, View, TouchableOpacity, SafeAreaView, Text, StyleSheet, FlatList, Modal, TextInput } from 'react-native';
+import { View, TouchableOpacity, SafeAreaView, Text, StyleSheet, FlatList } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
 import ModalAddChat from '../../components/ModalAddChat';
-import { useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import ModalChangePhoto from '../../components/ModalChangePhoto';
 
 
@@ -15,42 +15,50 @@ export default function ChatRoom({ navigation }) {
     const [chats, setChats] = useState([])
     const [modalodalAddChatt, setModalAddChat] = useState(false)
     const [modalProfile, setModalProfile] = useState(false)
+    let isUserLogged = !!auth().currentUser
+
 
     function handleLogout() {
         auth().signOut().then(() => {
             navigation.navigate('SingIn')
+            isUserLogged = false
         })
     }
 
-    function handleChat(nome, id) {
-        if (auth().currentUser) {
-            navigation.navigate('Chat', { nome, id })
-        } else {
-            navigation.navigate('SingIn')
-        }
-    }
-    useFocusEffect(
-        useCallback(() => {
 
-            async function getChats() {
+
+    useEffect(() => {
+
+        async function getGlobalChat() {
+            setChats([])
+            let data = await firestore().collection('chats').doc('lOOVcwIl5VzV2rYD0VbX').get()
+            let newData = {
+                ...data.data(),
+                id: data.id
+            }
+            setChats(oldChat => [...oldChat, newData])
+        }
+
+        async function getChats() {
+            if (isUserLogged) {
                 let data = await firestore()
                     .collection('chats')
-                    .where('integrantes', 'array-contains', auth().currentUser.toJSON().uid)
+                    .where('integrantes', 'array-contains', auth()?.currentUser?.toJSON()?.uid)
                     .get()
-                setChats([])
-                data.docs.forEach(i => {
+                data?.docs?.forEach(i => {
                     let data = {
                         ...i.data(),
                         id: i.id
                     }
                     setChats(oldChat => [...oldChat, data])
                 })
-    
             }
-    
+
+        }
+        getGlobalChat().then(() => {
             getChats()
-        }, [])
-    )
+        })
+    }, [modalodalAddChatt, modalProfile])
 
     return (
         <SafeAreaView style={styles.container}>
@@ -78,17 +86,32 @@ export default function ChatRoom({ navigation }) {
                 style={{ marginTop: '5%' }}
                 contentContainerStyle={{ paddingHorizontal: '5%' }}
                 data={chats}
-                renderItem={({ item }) => (
-                    <TouchableOpacity style={styles.chatCard} onPress={() => handleChat(item.nome, item.id)}>
-                        <Text>{item.nome}</Text>
-                    </TouchableOpacity>
-                )}
+                renderItem={({ item }) => <Item item={item} />}
             />
 
-            {modalodalAddChatt && <ModalAddChat visible={modalodalAddChatt} closeModal={() => setModalAddChat(false)}/>}
-            {modalProfile && <ModalChangePhoto visible={modalProfile} closeModal={() => setModalProfile(false)}/>}
+            {modalodalAddChatt && isUserLogged && <ModalAddChat visible={modalodalAddChatt} closeModal={() => setModalAddChat(false)} />}
+            {modalProfile && isUserLogged && <ModalChangePhoto visible={modalProfile} closeModal={() => setModalProfile(false)} />}
         </SafeAreaView>
     );
+}
+
+
+function Item({ item }) {
+    const navigation = useNavigation()
+
+    function handleChat(nome, id) {
+        if (auth().currentUser) {
+            navigation.navigate('Chat', { nome, id })
+        } else {
+            navigation.navigate('SingIn')
+        }
+    }
+
+    return (
+        <TouchableOpacity style={styles.chatCard} onPress={() => handleChat(item.nome, item.id)}>
+            <Text>{item.nome}</Text>
+        </TouchableOpacity>
+    )
 }
 
 const styles = StyleSheet.create({
@@ -122,11 +145,12 @@ const styles = StyleSheet.create({
     chatCard: {
         backgroundColor: '#080808',
         padding: '5%',
-        borderRadius: 12
+        borderRadius: 12,
+        marginTop: 20
     },
-    headerRight: { 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        width: '25%' 
+    headerRight: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '25%'
     }
 })

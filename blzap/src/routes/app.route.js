@@ -12,7 +12,7 @@ export default function AppRoutes() {
     return (
         <Stack.Navigator screenOptions={{
             gestureEnabled: true,
-            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS
+            cardStyleInterpolator: CardStyleInterpolators.forFadeFromCenter
         }}
             initialRouteName='ChatRoom'
         >
