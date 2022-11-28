@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, TouchableOpacity, SafeAreaView, Text, StyleSheet, FlatList } from 'react-native';
+import { View, TouchableOpacity, SafeAreaView, Text, StyleSheet, FlatList, Alert } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
@@ -17,7 +17,9 @@ export default function ChatRoom({ navigation }) {
     const [modalodalAddChatt, setModalAddChat] = useState(false)
     const [modalProfile, setModalProfile] = useState(false)
     const [createChatModal, setCreateChatModal] = useState(false)
+    const [refresh, setRefresh] = useState(true)
     let isUserLogged = !!auth().currentUser
+
 
 
     function handleLogout() {
@@ -27,6 +29,18 @@ export default function ChatRoom({ navigation }) {
         })
     }
 
+    function handleDeleteChatOnState(item){
+        setChats(oldChat => {
+            console.log('entrou')
+            let index = oldChat.indexOf(item)
+            oldChat.splice(index, 1)
+            return oldChat
+        })
+    }
+
+    function refreshChats(){
+        setRefresh(!refresh)
+    }
 
     useEffect(() => {
 
@@ -55,12 +69,12 @@ export default function ChatRoom({ navigation }) {
                     chatsData.push(data)
                 })
 
-                setChats(chatsData)
             }
+            setChats(chatsData)
 
         }
         getChats()
-    }, [modalodalAddChatt, createChatModal])
+    }, [refresh])
 
     return (
         <SafeAreaView style={styles.container}>
@@ -88,7 +102,7 @@ export default function ChatRoom({ navigation }) {
                 style={{ marginTop: '5%' }}
                 contentContainerStyle={{ paddingHorizontal: '5%' }}
                 data={chats}
-                renderItem={({ item }) => <Item item={item} />}
+                renderItem={({ item }) => <Item item={item} handleDeleteChatOnState={handleDeleteChatOnState} refreshChats={refreshChats}/>}
             />
 
             <TouchableOpacity style={styles.createChat} onPress={() => setCreateChatModal(true)}>
@@ -96,18 +110,18 @@ export default function ChatRoom({ navigation }) {
             </TouchableOpacity>
 
 
-            {modalodalAddChatt && isUserLogged && <ModalAddChat visible={modalodalAddChatt} closeModal={() => setModalAddChat(false)} />}
-            {createChatModal && isUserLogged && <ModalCreateChat visible={createChatModal} closeModal={() => setCreateChatModal(false)} />}
+            {modalodalAddChatt && isUserLogged && <ModalAddChat refreshChats={refreshChats} visible={modalodalAddChatt} closeModal={() => setModalAddChat(false)} />}
+            {createChatModal && isUserLogged && <ModalCreateChat refreshChats={refreshChats} visible={createChatModal} closeModal={() => setCreateChatModal(false)} />}
             {modalProfile && isUserLogged && <ModalChangePhoto visible={modalProfile} closeModal={() => setModalProfile(false)} />}
         </SafeAreaView>
     );
 }
 
 
-function Item({ item }) {
+function Item({ item, handleDeleteChatOnState, refreshChats}) {
     const navigation = useNavigation()
 
-    function handleChat(nome, id) {
+    function handleNavigateChat(nome, id) {
         if (auth().currentUser) {
             navigation.navigate('Chat', { nome, id })
         } else {
@@ -115,8 +129,40 @@ function Item({ item }) {
         }
     }
 
+    function handleGoOut() {
+        
+
+        async function goOutChat() {
+            handleDeleteChatOnState(item)
+            let documentSnapshot = await firestore().collection('chats').doc(item.id).get()
+
+            let { integrantes } = documentSnapshot.data()
+
+            let index = integrantes.indexOf(auth().currentUser.uid)
+
+            integrantes.splice(index, 1)
+
+            await firestore().collection('chats').doc(item.id).update({ integrantes: integrantes })
+            refreshChats()
+        }
+        Alert.alert(
+            'Sair do chat',
+            'Você deseja sair deste chat?',
+            [
+                {
+                    text: 'Continuar',
+                    onPress: () => goOutChat(),
+                },
+
+                {
+                    text: 'Cancelar',
+                    style: 'cancel'
+                }
+            ]
+        )
+    }
     return (
-        <TouchableOpacity style={styles.chatCard} onPress={() => handleChat(item.nome, item.id)}>
+        <TouchableOpacity style={styles.chatCard} onPress={() => handleNavigateChat(item.nome, item.id)} onLongPress={handleGoOut}>
             <Text>{item.nome}</Text>
         </TouchableOpacity>
     )
@@ -161,7 +207,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         width: '25%'
     },
-    createChat:{
+    createChat: {
         position: 'absolute',
         right: '5%',
         bottom: '3%',

@@ -8,7 +8,7 @@ import auth from '@react-native-firebase/auth'
 
 
 
-export default function ModalCreateChat({ visible, closeModal }) {
+export default function ModalCreateChat({ visible, closeModal, refreshChats }) {
 
     const [chatName, setChatName] = useState('')
     const [code, setCode] = useState(null)
@@ -25,6 +25,7 @@ export default function ModalCreateChat({ visible, closeModal }) {
             }).then(async (documentRef) => {
                 await firestore().collection('chats').doc(documentRef.id).update({ id: documentRef.id })
                 setCode(documentRef.id)
+                
             })
         }
     }
@@ -33,9 +34,14 @@ export default function ModalCreateChat({ visible, closeModal }) {
         Clipboard.setString(code)
     }
     return (
-        <Modal visible={visible} animationType='slide' transparent={true} onRequestClose={closeModal}>
+        <Modal visible={visible} animationType='slide' transparent={true} onRequestClose={() => {
+            closeModal()
+            refreshChats()}}>
             <>
-                <TouchableWithoutFeedback onPress={closeModal}>
+                <TouchableWithoutFeedback onPress={() => {
+                    closeModal()
+                    refreshChats()
+                }}>
                     <View style={styles.screen}></View>
                 </TouchableWithoutFeedback>
                 <KeyboardAvoidingView enabled={false} behavior={'padding'} style={styles.main}>

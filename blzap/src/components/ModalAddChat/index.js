@@ -5,7 +5,7 @@ import firestore from '@react-native-firebase/firestore'
 import auth from '@react-native-firebase/auth'
 
 
-export default function ModalAddChat({ visible, closeModal }) {
+export default function ModalAddChat({ visible, closeModal, refreshChats }) {
 
     const [code, setCode] = useState('')
 
@@ -26,6 +26,7 @@ export default function ModalAddChat({ visible, closeModal }) {
             await firestore().collection('chats').doc(data.id).update({integrantes: [...data.integrantes, uid]})
             setCode('')
             closeModal()
+            refreshChats()
         }
 
     }

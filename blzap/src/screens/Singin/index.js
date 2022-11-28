@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Animated, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
@@ -10,9 +10,24 @@ export default function Singin({ navigation }) {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [error, setError] = useState(null)
     const [type, setType] = useState(false)
+    const heightErrorView = useRef(new Animated.Value(0)).current
+    const emailInputRef = useRef()
+    const passwordInputRef = useRef()
+    const nameInputRef = useRef()
+
+
 
     async function addUser() {
+        if (name === '' || email === '' || password === '') return
+
+        if (name.length <= 2){
+            setError({name: 'Nome muito curto'})
+            runErrorToastAnimation()
+            nameInputRef?.current?.focus()
+        }
+
         await auth().createUserWithEmailAndPassword(email, password)
             .then(({ user }) => {
                 user.updateProfile({
@@ -22,12 +37,38 @@ export default function Singin({ navigation }) {
                     navigation.goBack()
                 })
             })
+            .catch((errorResponse) => {
+                if (errorResponse.code == 'auth/weak-password') {
+                    setError({ password: 'A senha é muito fraca' })
+                    runErrorToastAnimation()
+                    passwordInputRef?.current?.focus()
+                }
+                else if (errorResponse.code.includes('auth/invalid-password')) {
+                    setError({ password: 'Senha com mínimo 6 digitos' })
+                    runErrorToastAnimation()
+                    passwordInputRef?.current?.focus()
+                }
+                else if (errorResponse.code.includes('auth/email-already-in-use')) {
+                    setError({ email: 'Este e-mail já em uso' })
+                    runErrorToastAnimation()
+                    emailInputRef?.current?.focus()
+                }
+                else if (errorResponse.code.includes('auth/invalid-email')) {
+                    setError({ email: 'Email inválido' })
+                    runErrorToastAnimation()
+                    emailInputRef?.current?.focus()
+                }
+                else if (errorResponse.code.includes('auth/network-request-failed')) {
+                    setError({ internet: 'Falha com a internet' })
+                    runErrorToastAnimation()
+                }
+            })
     }
 
     async function addUserOnFirestore() {
         await firestore()
             .collection('users')
-            .doc(auth().currentUser.toJSON().uid)
+            .doc(auth()?.currentUser?.toJSON()?.uid)
             .set({
                 nome: name,
                 email: email,
@@ -38,47 +79,102 @@ export default function Singin({ navigation }) {
     async function handleLogin() {
         if (type) {
             if (name === '' || email === '' || password === '') return
-            await addUser()
-            await addUserOnFirestore()
+            addUser().then(() => {
+                addUserOnFirestore()
+            })
 
         } else {
-            auth().signInWithEmailAndPassword(email, password)
-                .then(() => navigation.goBack())
+            if (email !== '' && password !== '') {
+                auth().signInWithEmailAndPassword(email, password)
+                    .then(() => navigation.goBack())
+                    .catch((errorResponse) => {
+                        if (errorResponse.code === 'auth/invalid-email') {
+                            setError({ email: 'Por favor, informe um e-mail válido.' })
+                            runErrorToastAnimation()
+                            emailInputRef?.current?.focus()
+                        }
+                        else if (errorResponse.code === 'auth/wrong-password') {
+                            setError({ password: 'Senha incorreta' })
+                            runErrorToastAnimation()
+                            passwordInputRef?.current?.focus()
+                        }
+                        else if (errorResponse.code === 'auth/network-request-failed') {
+                            setError({ internet: 'Falha com a internet' })
+                            runErrorToastAnimation()
+                        }
+
+
+
+                    })
+            }
         }
     }
 
+    function runErrorToastAnimation() {
+        Animated.sequence([
+            Animated.timing(heightErrorView, {
+                toValue: 50,
+                duration: 0.5 * 1000,
+                useNativeDriver: false,
+            }),
+            Animated.timing(heightErrorView, {
+                toValue: 0,
+                duration: 1500,
+                useNativeDriver: false,
+                delay: 3.5 * 1000
+            })
+        ]).start()
+    }
     return (
         <SafeAreaView style={styles.conteiner}>
+            {
+                error && (
+                    <Animated.View style={[
+                        styles.errorToast,
+                        { height: heightErrorView }
+                    ]}>
+                        <Text style={styles.errorToastText}>{
+                            error?.email ||
+                            error?.password ||
+                            error?.internet ||
+                            error?.name || 'Sei la poha se vira ai'}</Text>
+                    </Animated.View>
+                )
+            }
             <Text style={styles.logo} >BL Zap</Text>
             <Text style={{ color: '#fff' }} >Ajude, colabore e faça networking!</Text>
 
 
             {
                 type && <TextInput
-                    style={styles.input}
+                    style={[styles.input, { borderWidth: 1, borderColor: error?.name ? '#ff0000' : 'transparent' }]}
                     value={name}
                     onChangeText={setName}
                     placeholder='Qual seu nome?'
                     placeholderTextColor='#99999b'
+                    ref={nameInputRef}
                 />
             }
 
             <TextInput
-                style={styles.input}
+                style={[styles.input, { borderWidth: 1, borderColor: error?.email ? '#ff0000' : 'transparent' }]}
                 value={email}
                 onChangeText={setEmail}
                 placeholder='Qual seu email?'
+                ref={emailInputRef}
                 placeholderTextColor='#99999b'
+                keyboardType='email-address'
             />
 
 
             <TextInput
-                style={styles.input}
+                style={[styles.input, { borderWidth: 1, borderColor: error?.password ? '#ff0000' : 'transparent' }]}
                 value={password}
                 onChangeText={setPassword}
                 placeholder='*******'
                 placeholderTextColor='#99999b'
                 secureTextEntry
+                ref={passwordInputRef}
             />
 
             <TouchableOpacity
@@ -97,6 +193,20 @@ export default function Singin({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+    errorToast: {
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#ff0000',
+        position: 'absolute',
+        top: 0,
+        left: 0
+    },
+    errorToastText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: 'bold'
+    },
     conteiner: {
         flex: 1,
         alignItems: 'center',
