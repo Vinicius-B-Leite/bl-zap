@@ -41,7 +41,7 @@ export default function Chat({ route }) {
                 .collection('mensagens')
                 .add({
                     texto: newMsg,
-                    hora: new Date(),
+                    hora: firestore.FieldValue.serverTimestamp(),
                     uid: auth().currentUser.uid,
                 })
         }
@@ -69,9 +69,11 @@ export default function Chat({ route }) {
                     style={styles.inp}
                     placeholder='Escreva uma mensagem'
                     placeholderTextColor='#d3d3d3'
-                    onEndEditing={sendMessage}
+                    autoCorrect={true}                    
+                    multiline={true}
+                    scrollEnabled={true}
                 />
-                <TouchableOpacity onPress={sendMessage}>
+                <TouchableOpacity onPress={sendMessage} style={styles.btnSendMessage}>
                     <Feather name='send' size={20} color='#48CAE4' />
                 </TouchableOpacity>
             </View>
@@ -95,7 +97,7 @@ function Item({ item }) {
             setOwner(documentSnapshot?.data()?.nome)
             setPhoto(documentSnapshot?.data()?.foto)
         })
-    }, [])
+    }, [item])
 
 
     return (
@@ -155,7 +157,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 15
+        paddingHorizontal: 15,
+        position: 'relative',
+        maxHeight: 200
     },
     img: {
         width: 30,
@@ -167,5 +171,14 @@ const styles = StyleSheet.create({
     },
     owner: {
         color: '#48CAE4'
+    },
+    btnSendMessage: {
+        width: '15%',
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'absolute',
+        bottom: 5,
+        right: 5,
     }
 })

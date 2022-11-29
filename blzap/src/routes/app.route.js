@@ -11,7 +11,6 @@ const Stack = createStackNavigator()
 export default function AppRoutes() {
     return (
         <Stack.Navigator screenOptions={{
-            gestureEnabled: true,
             cardStyleInterpolator: CardStyleInterpolators.forFadeFromCenter
         }}
             initialRouteName='ChatRoom'
@@ -40,7 +39,7 @@ export default function AppRoutes() {
                 component={Chat}
                 name='Chat'
                 options={{
-                    headerShown: false 
+                    headerShown: false,
                 }}
             />
         </Stack.Navigator>

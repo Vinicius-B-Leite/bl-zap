@@ -22,8 +22,8 @@ export default function Singin({ navigation }) {
     async function addUser() {
         if (name === '' || email === '' || password === '') return
 
-        if (name.length <= 2){
-            setError({name: 'Nome muito curto'})
+        if (name.length <= 2) {
+            setError({ name: 'Nome muito curto' })
             runErrorToastAnimation()
             nameInputRef?.current?.focus()
         }
@@ -142,7 +142,7 @@ export default function Singin({ navigation }) {
                 )
             }
             <Text style={styles.logo} >BL Zap</Text>
-            <Text style={{ color: '#fff' }} >Ajude, colabore e faça networking!</Text>
+            <Text style={{ color: '#fff', lineHeight: 40, marginBottom: 20 }} >Ajude, colabore e faça networking!</Text>
 
 
             {
@@ -164,7 +164,11 @@ export default function Singin({ navigation }) {
                 ref={emailInputRef}
                 placeholderTextColor='#99999b'
                 keyboardType='email-address'
+                autoCapitalize={false}
+                autoComplete='email'
+                autoCorrect={false}
             />
+            
 
 
             <TextInput
@@ -175,7 +179,11 @@ export default function Singin({ navigation }) {
                 placeholderTextColor='#99999b'
                 secureTextEntry
                 ref={passwordInputRef}
+                autoCapitalize={false}
+                autoComplete='password'
+                autoCorrect={false}
             />
+            
 
             <TouchableOpacity
                 style={[styles.btn, { backgroundColor: type ? '#000' : '#080808' }]}
@@ -213,7 +221,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#121212'
     },
     logo: {
-        marginTop: 55,
+        marginTop: 80,
         fontSize: 28,
         fontWeight: 'bold',
         color: '#fff'
