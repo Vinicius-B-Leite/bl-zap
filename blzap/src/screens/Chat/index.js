@@ -5,6 +5,7 @@ import { FlatList, StyleSheet, Text, View, TouchableOpacity, TextInput, Image } 
 import Feather from 'react-native-vector-icons/Feather'
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
+import { listnerMessages, sendMessage } from '../../services/firebase/firestore';
 
 
 export default function Chat({ route }) {
@@ -14,38 +15,12 @@ export default function Chat({ route }) {
 
     useEffect(() => {
 
-        let listner = firestore()
-            .collection('chats')
-            .doc(route.params.id)
-            .collection('mensagens')
-            .orderBy('hora', 'desc')
-            .onSnapshot((snapshotQuery) => {
-                const msg = []
+        listnerMessages(route.params.id, setMsgs)
 
-                snapshotQuery.docs.forEach(doc => {
-                    msg.push({ ...doc.data(), id: doc.id })
-                })
-                setMsgs(msg)
-            })
-
-
-        return () => listner()
+        return () => listnerMessages()
     }, [])
 
-    function sendMessage() {
-        if (newMsg.length > 0) {
-            setNewMsg('')
-            firestore()
-                .collection('chats')
-                .doc(route.params.id)
-                .collection('mensagens')
-                .add({
-                    texto: newMsg,
-                    hora: firestore.FieldValue.serverTimestamp(),
-                    uid: auth().currentUser.uid,
-                })
-        }
-    }
+   
 
     return (
         <View style={styles.container}>
@@ -73,7 +48,7 @@ export default function Chat({ route }) {
                     multiline={true}
                     scrollEnabled={true}
                 />
-                <TouchableOpacity onPress={sendMessage} style={styles.btnSendMessage}>
+                <TouchableOpacity onPress={() => sendMessage(setNewMsg, newMsg, route.params.id)} style={styles.btnSendMessage}>
                     <Feather name='send' size={20} color='#48CAE4' />
                 </TouchableOpacity>
             </View>

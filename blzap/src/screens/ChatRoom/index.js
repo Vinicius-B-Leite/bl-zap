@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, TouchableOpacity, SafeAreaView, Text, StyleSheet, FlatList, Alert } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
@@ -10,26 +10,23 @@ import { useNavigation } from '@react-navigation/native';
 import ModalChangePhoto from '../../components/ModalProfile';
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import ModalCreateChat from '../../components/ModalCreateChat';
+import { AuthContext } from '../../contexts/auth';
 
 
 export default function ChatRoom({ navigation }) {
+    const { isUserLogged, handleLogout } = useContext(AuthContext)
+
     const [chats, setChats] = useState([])
     const [modalodalAddChatt, setModalAddChat] = useState(false)
     const [modalProfile, setModalProfile] = useState(false)
     const [createChatModal, setCreateChatModal] = useState(false)
     const [refresh, setRefresh] = useState(true)
-    let isUserLogged = !!auth().currentUser
 
 
 
-    function handleLogout() {
-        auth().signOut().then(() => {
-            navigation.navigate('SingIn')
-            isUserLogged = false
-        })
-    }
+    
 
-    function handleDeleteChatOnState(item){
+    function handleDeleteChatOnState(item) {
         setChats(oldChat => {
             console.log('entrou')
             let index = oldChat.indexOf(item)
@@ -38,7 +35,7 @@ export default function ChatRoom({ navigation }) {
         })
     }
 
-    function refreshChats(){
+    function refreshChats() {
         setRefresh(!refresh)
     }
 
@@ -82,7 +79,7 @@ export default function ChatRoom({ navigation }) {
                 <View style={styles.headerLeft}>
                     {
                         auth().currentUser && (
-                            <TouchableOpacity onPress={handleLogout} style={{ transform: [{ rotate: '180deg' }] }}>
+                            <TouchableOpacity onPress={() => handleLogout(() => navigation.navigate('SingIn'))} style={{ transform: [{ rotate: '180deg' }] }}>
                                 <MaterialIcons name='logout' size={23} color='#fff' />
                             </TouchableOpacity>
                         )
@@ -102,7 +99,7 @@ export default function ChatRoom({ navigation }) {
                 style={{ marginTop: '5%' }}
                 contentContainerStyle={{ paddingHorizontal: '5%' }}
                 data={chats}
-                renderItem={({ item }) => <Item item={item} handleDeleteChatOnState={handleDeleteChatOnState} refreshChats={refreshChats}/>}
+                renderItem={({ item }) => <Item item={item} handleDeleteChatOnState={handleDeleteChatOnState} refreshChats={refreshChats} />}
             />
 
             <TouchableOpacity style={styles.createChat} onPress={() => setCreateChatModal(true)}>
@@ -118,7 +115,7 @@ export default function ChatRoom({ navigation }) {
 }
 
 
-function Item({ item, handleDeleteChatOnState, refreshChats}) {
+function Item({ item, handleDeleteChatOnState, refreshChats }) {
     const navigation = useNavigation()
 
     function handleNavigateChat(nome, id) {
@@ -130,7 +127,7 @@ function Item({ item, handleDeleteChatOnState, refreshChats}) {
     }
 
     function handleGoOut() {
-        
+
 
         async function goOutChat() {
             handleDeleteChatOnState(item)

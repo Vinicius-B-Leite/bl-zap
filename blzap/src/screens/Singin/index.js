@@ -1,16 +1,19 @@
-import React, { useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { Animated, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
+import { AuthContext } from '../../contexts/auth';
 
 
 
 export default function Singin({ navigation }) {
+
+    const { handleLogin, error, setError } = useContext(AuthContext)
+
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [error, setError] = useState(null)
     const [type, setType] = useState(false)
     const heightErrorView = useRef(new Animated.Value(0)).current
     const emailInputRef = useRef()
@@ -19,96 +22,11 @@ export default function Singin({ navigation }) {
 
 
 
-    async function addUser() {
-        if (name === '' || email === '' || password === '') return
-
-        if (name.length <= 2) {
-            setError({ name: 'Nome muito curto' })
-            runErrorToastAnimation()
-            nameInputRef?.current?.focus()
-        }
-
-        await auth().createUserWithEmailAndPassword(email, password)
-            .then(({ user }) => {
-                user.updateProfile({
-                    displayName: name,
-                    photoURL: 'https://img.favpng.com/7/5/8/computer-icons-font-awesome-user-font-png-favpng-YMnbqNubA7zBmfa13MK8WdWs8.jpg'
-                }).then(() => {
-                    navigation.goBack()
-                })
-            })
-            .catch((errorResponse) => {
-                if (errorResponse.code == 'auth/weak-password') {
-                    setError({ password: 'A senha é muito fraca' })
-                    runErrorToastAnimation()
-                    passwordInputRef?.current?.focus()
-                }
-                else if (errorResponse.code.includes('auth/invalid-password')) {
-                    setError({ password: 'Senha com mínimo 6 digitos' })
-                    runErrorToastAnimation()
-                    passwordInputRef?.current?.focus()
-                }
-                else if (errorResponse.code.includes('auth/email-already-in-use')) {
-                    setError({ email: 'Este e-mail já em uso' })
-                    runErrorToastAnimation()
-                    emailInputRef?.current?.focus()
-                }
-                else if (errorResponse.code.includes('auth/invalid-email')) {
-                    setError({ email: 'Email inválido' })
-                    runErrorToastAnimation()
-                    emailInputRef?.current?.focus()
-                }
-                else if (errorResponse.code.includes('auth/network-request-failed')) {
-                    setError({ internet: 'Falha com a internet' })
-                    runErrorToastAnimation()
-                }
-            })
-    }
-
-    async function addUserOnFirestore() {
-        await firestore()
-            .collection('users')
-            .doc(auth()?.currentUser?.toJSON()?.uid)
-            .set({
-                nome: name,
-                email: email,
-                foto: 'https://img.favpng.com/7/5/8/computer-icons-font-awesome-user-font-png-favpng-YMnbqNubA7zBmfa13MK8WdWs8.jpg'
-            })
-    }
-
-    async function handleLogin() {
-        if (type) {
-            if (name === '' || email === '' || password === '') return
-            addUser().then(() => {
-                addUserOnFirestore()
-            })
-
-        } else {
-            if (email !== '' && password !== '') {
-                auth().signInWithEmailAndPassword(email, password)
-                    .then(() => navigation.goBack())
-                    .catch((errorResponse) => {
-                        if (errorResponse.code === 'auth/invalid-email') {
-                            setError({ email: 'Por favor, informe um e-mail válido.' })
-                            runErrorToastAnimation()
-                            emailInputRef?.current?.focus()
-                        }
-                        else if (errorResponse.code === 'auth/wrong-password') {
-                            setError({ password: 'Senha incorreta' })
-                            runErrorToastAnimation()
-                            passwordInputRef?.current?.focus()
-                        }
-                        else if (errorResponse.code === 'auth/network-request-failed') {
-                            setError({ internet: 'Falha com a internet' })
-                            runErrorToastAnimation()
-                        }
 
 
+    
 
-                    })
-            }
-        }
-    }
+    
 
     function runErrorToastAnimation() {
         Animated.sequence([
@@ -168,7 +86,7 @@ export default function Singin({ navigation }) {
                 autoComplete='email'
                 autoCorrect={false}
             />
-            
+
 
 
             <TextInput
@@ -183,16 +101,19 @@ export default function Singin({ navigation }) {
                 autoComplete='password'
                 autoCorrect={false}
             />
-            
+
 
             <TouchableOpacity
                 style={[styles.btn, { backgroundColor: type ? '#000' : '#080808' }]}
-                onPress={handleLogin}
+                onPress={() => handleLogin(name, email, password, type, runErrorToastAnimation, () => navigation.goBack())}
             >
                 <Text style={styles.txtBtn}>{type ? 'Cadastrar' : 'Acessar'}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => setType(!type)}>
+            <TouchableOpacity onPress={() => {
+                setType(!type)
+                setError({})
+            }}>
                 <Text style={{ color: '#fff' }}>{type ? 'Já possuo uma conta' : 'Criar nova conta'}</Text>
             </TouchableOpacity>
 
