@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, View, TouchableOpacity, TextInput, Image, Animated, Dimensions } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 
@@ -11,10 +11,11 @@ const AnimatedImagePicker = Animated.createAnimatedComponent(TouchableOpacity)
 
 
 export default function Chat({ route }) {
-    const { sendMessage, listnerMessages, messages, uploadoToStorage } = useContext(ChatContext)
+    const { sendMessage, listnerMessages, messages, uploadoToStorage, loadingsSendMessage } = useContext(ChatContext)
     const navigation = useNavigation()
     const [newMsg, setNewMsg] = useState('')
     const xImagePicker = useRef(new Animated.Value(0)).current
+
 
 
     useEffect(() => {
@@ -37,11 +38,11 @@ export default function Chat({ route }) {
         let uri = ''
 
         const opt = {
-            mediaType: 'photo', 
+            mediaType: 'photo',
             selectionLimit: 1
         }
 
-        launchImageLibrary(opt, async ({assets}) => {
+        launchImageLibrary(opt, async ({ assets }) => {
             uri = assets[0].uri
             let downloadURL = await uploadoToStorage(uri, route.params.id)
             sendMessage(setNewMsg, newMsg, route.params.id, 'imagem', downloadURL)
@@ -87,9 +88,17 @@ export default function Chat({ route }) {
                         <Feather name='image' size={20} color='#48CAE4' />
                     </AnimatedImagePicker>
 
-                    <TouchableOpacity activeOpacity={0.9} onPress={() => sendMessage(setNewMsg, newMsg, route.params.id, 'texto')} style={styles.btnSendMessage}>
-                        <Feather name='send' size={20} color='#fff' />
-                    </TouchableOpacity>
+                    {
+                        loadingsSendMessage ?
+                            <LoagingSendMessage />
+                            :
+                            <TouchableOpacity
+                                activeOpacity={0.9}
+                                onPress={() => sendMessage(setNewMsg, newMsg, route.params.id, 'texto')}
+                                style={styles.btnSendMessage}>
+                                <Feather name='send' size={20} color='#fff' />
+                            </TouchableOpacity>
+                    }
 
                 </View>
             </View>
@@ -97,6 +106,48 @@ export default function Chat({ route }) {
     );
 }
 
+function LoagingSendMessage() {
+
+    const { loadingsSendMessage } = useContext(ChatContext)
+
+    const xLeftBubble = useRef(new Animated.Value(-100))
+    const xMiddleBubble = useRef(new Animated.Value(-70))
+    const xRightBubble = useRef(new Animated.Value(-40))
+
+    const runLoadinAnimation = useRef(
+        Animated.loop(
+            Animated.parallel([
+                Animated.timing(xRightBubble.current, {
+                    toValue: 45,
+                    duration: 1.8 * 1000,
+                    useNativeDriver: true,
+                    delay: 100
+                }),
+                Animated.timing(xMiddleBubble.current, {
+                    toValue: 45,
+                    duration: 1.8 * 1000,
+                    useNativeDriver: true,
+                    delay: 200
+                }),
+                Animated.timing(xLeftBubble.current, {
+                    toValue: 45,
+                    duration: 1.8 * 1000,
+                    useNativeDriver: true,
+                    delay: 300
+                }),
+            ])
+        )
+    ).current
+            console.log(loadingsSendMessage)
+
+    useEffect(() => loadingsSendMessage ? runLoadinAnimation.start() : xLeftBubble.setValue(0), [loadingsSendMessage])
+
+    return <View style={[styles.btnSendMessage, { flexDirection: 'row', justifyContent: 'space-evenly' }]} >
+        <Animated.View style={[styles.loading, { transform: [{ translateX: xLeftBubble.current }] }]} />
+        <Animated.View style={[styles.loading, { transform: [{ translateX: xMiddleBubble.current }] }]} />
+        <Animated.View style={[styles.loading, { transform: [{ translateX: xRightBubble.current }] }]} />
+    </View>
+}
 
 function Item({ item }) {
     const { userInfo } = useContext(AuthContext)
@@ -131,7 +182,7 @@ function Item({ item }) {
             <View >
                 {!isMyMessage && <Text style={styles.owner}>{owner}</Text>}
                 {item.tipo === 'texto' && <Text>{item.texto}</Text>}
-                {item.tipo === 'imagem' && <Image source={{uri: item.imagemURL}} style={styles.imagemAsMessage}/>}
+                {item.tipo === 'imagem' && <Image source={{ uri: item.imagemURL }} style={styles.imagemAsMessage} />}
             </View>
         </View>
     )
@@ -196,7 +247,8 @@ const styles = StyleSheet.create({
         bottom: 5,
         right: 5,
         backgroundColor: '#48CAE4',
-        borderRadius: 30
+        borderRadius: 30,
+        overflow: 'hidden'
     },
     containerActions: {
         flexDirection: 'row',
@@ -206,11 +258,17 @@ const styles = StyleSheet.create({
         height: '100%',
         alignItems: 'center'
     },
-    imagemAsMessage:{
+    imagemAsMessage: {
         width: Dimensions.get('screen').width / 2,
         height: Dimensions.get('screen').height / 3,
         borderRadius: 10,
         resizeMode: 'cover',
-        
+
+    },
+    loading: {
+        backgroundColor: '#fff',
+        height: '20%',
+        width: '20%',
+        borderRadius: 20
     }
 })

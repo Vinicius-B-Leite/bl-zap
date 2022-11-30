@@ -11,8 +11,8 @@ export default function ChatProvider({ children }) {
     const [refreshChats, setRefreshChats] = useState(false)
 
     const { userInfo, isUserLogged } = useContext(AuthContext)
-
     const [loadingSearch, setLoadingSearch] = useState(false)
+    const [loadingsSendMessage, setLoadingSendMessage] = useState(false)
 
     useEffect(() => {
         getChats()
@@ -94,6 +94,9 @@ export default function ChatProvider({ children }) {
 
     function sendMessage(setNewMsg, newMsg, chatId, type, imageURI) {
         if (newMsg.length > 0 && type == 'texto' || imageURI.length > 0 && type == 'imagem') {
+
+            setLoadingSendMessage(true)
+
             setNewMsg('')
             firestore()
                 .collection('chats')
@@ -105,14 +108,19 @@ export default function ChatProvider({ children }) {
                     uid: userInfo.uid,
                     tipo: type,
                     imagemURL: imageURI ? imageURI : ''
+                }).finally(() => {
+                    setLoadingSendMessage(false)
                 })
+
+            
         }
     }
 
-    async function uploadoToStorage(uri, chatId){
+    async function uploadoToStorage(uri, chatId) {
+        setLoadingSendMessage(true)
         const ref = storage().ref(`chats/${chatId}/${userInfo.uid}_${new Date()}`)
         await ref.putFile(uri)
-
+        setLoadingSendMessage(false)
         return await ref.getDownloadURL()
     }
 
@@ -148,7 +156,8 @@ export default function ChatProvider({ children }) {
             listnerMessages,
             messages,
             getMessage,
-            uploadoToStorage
+            uploadoToStorage,
+            loadingsSendMessage
         }}>
             {children}
         </ChatContext.Provider>
