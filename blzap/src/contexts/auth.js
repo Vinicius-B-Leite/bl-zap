@@ -76,7 +76,6 @@ export default function AuthProvider({ children }) {
                 })
         }
     }
-
     async function handleLogin(name, email, password, type, runErrorToastAnimation, goBack) {
         if (type) {
             if (name === '' || email === '' || password === '') return
@@ -107,6 +106,7 @@ export default function AuthProvider({ children }) {
             }
         }
     }
+    
 
     return (
         <AuthContext.Provider value={{ isUserLogged, handleLogout, handleLogin, error, setError, userInfo }}>

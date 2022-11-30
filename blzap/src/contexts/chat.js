@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import firestore from '@react-native-firebase/firestore'
 import { AuthContext } from './auth';
-
+import storage from '@react-native-firebase/storage'
 
 export const ChatContext = createContext()
 
@@ -92,8 +92,8 @@ export default function ChatProvider({ children }) {
         closeModal()
     }
 
-    function sendMessage(setNewMsg, newMsg, chatId) {
-        if (newMsg.length > 0) {
+    function sendMessage(setNewMsg, newMsg, chatId, type, imageURI) {
+        if (newMsg.length > 0 && type == 'texto' || imageURI.length > 0 && type == 'imagem') {
             setNewMsg('')
             firestore()
                 .collection('chats')
@@ -102,9 +102,18 @@ export default function ChatProvider({ children }) {
                 .add({
                     texto: newMsg,
                     hora: firestore.FieldValue.serverTimestamp(),
-                    uid: userInfo.uid
+                    uid: userInfo.uid,
+                    tipo: type,
+                    imagemURL: imageURI ? imageURI : ''
                 })
         }
+    }
+
+    async function uploadoToStorage(uri, chatId){
+        const ref = storage().ref(`chats/${chatId}/${userInfo.uid}_${new Date()}`)
+        await ref.putFile(uri)
+
+        return await ref.getDownloadURL()
     }
 
     function listnerMessages(chatId) {
@@ -115,18 +124,32 @@ export default function ChatProvider({ children }) {
             .orderBy('hora', 'desc')
             .onSnapshot((snapshotQuery) => {
                 const msg = []
-    
+
                 snapshotQuery.docs.forEach(doc => {
                     msg.push({ ...doc.data(), id: doc.id })
                 })
                 setMessages(msg)
             })
     }
-    
-    
+
+    async function getMessage(userUID) {
+        let data = await firestore().collection('users').doc(userUID).get()
+        return { owner: data?.data()?.nome, photo: data?.data()?.foto }
+    }
 
     return (
-        <ChatContext.Provider value={{ chats, goOutChat, toRefreshChats, searchChat, loadingSearch, sendMessage, listnerMessages, messages }}>
+        <ChatContext.Provider value={{
+            chats,
+            goOutChat,
+            toRefreshChats,
+            searchChat,
+            loadingSearch,
+            sendMessage,
+            listnerMessages,
+            messages,
+            getMessage,
+            uploadoToStorage
+        }}>
             {children}
         </ChatContext.Provider>
     );
