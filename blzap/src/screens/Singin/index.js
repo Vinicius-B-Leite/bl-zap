@@ -21,13 +21,6 @@ export default function Singin({ navigation }) {
     const nameInputRef = useRef()
 
 
-
-
-
-    
-
-    
-
     function runErrorToastAnimation() {
         Animated.sequence([
             Animated.timing(heightErrorView, {
@@ -43,6 +36,8 @@ export default function Singin({ navigation }) {
             })
         ]).start()
     }
+
+    
     return (
         <SafeAreaView style={styles.conteiner}>
             {

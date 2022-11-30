@@ -1,46 +1,50 @@
-import React, { useState } from 'react';
-import {KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather'
 import firestore from '@react-native-firebase/firestore'
 import Clipboard from '@react-native-community/clipboard';
 
-import auth from '@react-native-firebase/auth'
+import { ChatContext } from '../../contexts/chat';
+import { AuthContext } from '../../contexts/auth';
 
 
 
-export default function ModalCreateChat({ visible, closeModal, refreshChats }) {
+export default function ModalCreateChat({ visible, closeModal }) {
 
     const [chatName, setChatName] = useState('')
     const [code, setCode] = useState(null)
+    const { toRefreshChats } = useContext(ChatContext)
+    const { userInfo } = useContext(AuthContext)
 
     async function createChat() {
         if (chatName !== '') {
             firestore().collection('chats').add({
-                autor: auth().currentUser.toJSON().displayName,
+                autor: userInfo.displayName,
                 id: '',
                 integrantes: [
-                    auth().currentUser.toJSON().uid
+                    userInfo.uid
                 ],
                 nome: chatName
             }).then(async (documentRef) => {
                 await firestore().collection('chats').doc(documentRef.id).update({ id: documentRef.id })
                 setCode(documentRef.id)
-                
             })
         }
     }
 
-    function copyToClipboard(){
+    function copyToClipboard() {
         Clipboard.setString(code)
+        ToastAndroid.show('Texto copiado', ToastAndroid.SHORT)
     }
     return (
         <Modal visible={visible} animationType='slide' transparent={true} onRequestClose={() => {
             closeModal()
-            refreshChats()}}>
+            toRefreshChats()
+        }}>
             <>
                 <TouchableWithoutFeedback onPress={() => {
                     closeModal()
-                    refreshChats()
+                    toRefreshChats()
                 }}>
                     <View style={styles.screen}></View>
                 </TouchableWithoutFeedback>

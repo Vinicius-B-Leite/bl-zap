@@ -1,0 +1,12 @@
+pegar a imagem (image picker)
+view para imagem igual o whatsap
+
+mandar a mensagem
+   mandar pro storage e pegar o downloadURL
+   mandar o downloadURL na mensagem la para o firestore (chats/idChat/mensagens) com
+   a propriedade type igual a image
+
+
+mostrar no chat 
+    verificar a propriedade type
+    se type for 'image' exibir um componente de imagem

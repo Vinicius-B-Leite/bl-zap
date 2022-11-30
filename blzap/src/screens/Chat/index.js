@@ -1,26 +1,26 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, View, TouchableOpacity, TextInput, Image } from 'react-native';
 
 import Feather from 'react-native-vector-icons/Feather'
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
-import { listnerMessages, sendMessage } from '../../services/firebase/firestore';
+import { ChatContext } from '../../contexts/chat';
 
 
 export default function Chat({ route }) {
+    const { sendMessage, listnerMessages, messages } = useContext(ChatContext)
     const navigation = useNavigation()
-    const [msgs, setMsgs] = useState([])
     const [newMsg, setNewMsg] = useState('')
 
     useEffect(() => {
 
-        listnerMessages(route.params.id, setMsgs)
+        let listner = listnerMessages(route.params.id)
 
-        return () => listnerMessages()
+        return () => listner()    
     }, [])
 
-   
+
 
     return (
         <View style={styles.container}>
@@ -32,7 +32,7 @@ export default function Chat({ route }) {
             </View>
             <FlatList
                 inverted={true}
-                data={msgs}
+                data={messages}
                 style={{ flex: 1, padding: '5%' }}
                 renderItem={({ item }) => <Item item={item} />}
             />
@@ -44,7 +44,7 @@ export default function Chat({ route }) {
                     style={styles.inp}
                     placeholder='Escreva uma mensagem'
                     placeholderTextColor='#d3d3d3'
-                    autoCorrect={true}                    
+                    autoCorrect={true}
                     multiline={true}
                     scrollEnabled={true}
                 />

@@ -1,35 +1,15 @@
-import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View, TouchableOpacity } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { Modal, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore'
 import auth from '@react-native-firebase/auth'
+import ChatProvider, { ChatContext } from '../../contexts/chat';
 
 
-export default function ModalAddChat({ visible, closeModal, refreshChats }) {
-
+export default function ModalAddChat({ visible, closeModal }) {
+    const { searchChat, loadingSearch } = useContext(ChatContext)
     const [code, setCode] = useState('')
 
-    async function findChat(){
-        let doc = await firestore()
-        .collection('chats')
-        .where('id', '==', code)
-        .get()
-
-
-        let data = doc.docs.map(i => (i.data()))[0]
-
-        if (!data.integrantes.includes(auth().currentUser.uid)) {
-
-
-            let uid = auth().currentUser.toJSON().uid
-            
-            await firestore().collection('chats').doc(data.id).update({integrantes: [...data.integrantes, uid]})
-            setCode('')
-            closeModal()
-            refreshChats()
-        }
-
-    }
 
     return (
         <Modal visible={visible} animationType='slide' transparent={true} onRequestClose={closeModal}>
@@ -37,18 +17,18 @@ export default function ModalAddChat({ visible, closeModal, refreshChats }) {
                 <TouchableWithoutFeedback onPress={closeModal}>
                     <View style={styles.screen}></View>
                 </TouchableWithoutFeedback>
-                    <View style={styles.main}>
-                        <TextInput
-                            style={styles.inp}
-                            value={code}
-                            onChangeText={setCode}
-                            placeholder='Informe o código da sala'
-                            placeholderTextColor='#303030'
-                        />
-                        <TouchableOpacity style={styles.btn} onPress={() => findChat()}>
-                            <Text style={styles.btnText}>Enviar</Text>
-                        </TouchableOpacity>
-                    </View>
+                <View style={styles.main}>
+                    <TextInput
+                        style={styles.inp}
+                        value={code}
+                        onChangeText={setCode}
+                        placeholder='Informe o código da sala'
+                        placeholderTextColor='#303030'
+                    />
+                    <TouchableOpacity style={styles.btn} onPress={() => searchChat(code, closeModal)}>
+                        <Text style={styles.btnText}>{loadingSearch ? <ActivityIndicator/> : 'Enviar'}</Text>
+                    </TouchableOpacity>
+                </View>
             </>
         </Modal>
     );

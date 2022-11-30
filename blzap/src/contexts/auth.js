@@ -10,9 +10,9 @@ export default function AuthProvider({ children }) {
     const [error, setError] = useState({})
     const [userInfo, setUserInfo] = useState({})
 
-
     useEffect(() => {
         setUserInfo(auth()?.currentUser?.toJSON())
+        setIsUserLogged(!!userInfo)
     }, [isUserLogged])
 
     function handleLogout(goSingIn) {
@@ -87,7 +87,7 @@ export default function AuthProvider({ children }) {
                 auth().signInWithEmailAndPassword(email, password)
                     .then(() => {
                         goBack()
-                        setIsUserLogged(false)
+                        setIsUserLogged(true)
                     })
                     .catch((errorResponse) => {
                         if (errorResponse.code === 'auth/invalid-email') {
