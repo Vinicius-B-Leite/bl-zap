@@ -3,16 +3,17 @@ import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
 
 
+
 export const AuthContext = createContext()
 
 export default function AuthProvider({ children }) {
-    const [isUserLogged, setIsUserLogged] = useState(false)
     const [error, setError] = useState({})
-    const [userInfo, setUserInfo] = useState({})
+    const [userInfo, setUserInfo] = useState(auth()?.currentUser?.toJSON())
+    const [isUserLogged, setIsUserLogged] = useState(!!userInfo)
 
     useEffect(() => {
         setUserInfo(auth()?.currentUser?.toJSON())
-        setIsUserLogged(!!userInfo)
+        setIsUserLogged(!!auth()?.currentUser)
     }, [isUserLogged])
 
     function handleLogout(goSingIn) {

@@ -6,6 +6,8 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import Feather from 'react-native-vector-icons/Feather'
 import { ChatContext } from '../../contexts/chat';
 import { AuthContext } from '../../contexts/auth';
+import LoadingSendMessage from '../../components/LoadingSendMessage';
+import Message from '../../components/Message';
 
 const AnimatedImagePicker = Animated.createAnimatedComponent(TouchableOpacity)
 
@@ -15,8 +17,6 @@ export default function Chat({ route }) {
     const navigation = useNavigation()
     const [newMsg, setNewMsg] = useState('')
     const xImagePicker = useRef(new Animated.Value(0)).current
-
-
 
     useEffect(() => {
 
@@ -35,7 +35,6 @@ export default function Chat({ route }) {
     }
 
     function pickImage() {
-        let uri = ''
 
         const opt = {
             mediaType: 'photo',
@@ -43,13 +42,11 @@ export default function Chat({ route }) {
         }
 
         launchImageLibrary(opt, async ({ assets }) => {
-            uri = assets[0].uri
+            let uri = assets[0].uri
             let downloadURL = await uploadoToStorage(uri, route.params.id)
             sendMessage(setNewMsg, newMsg, route.params.id, 'imagem', downloadURL)
         })
     }
-
-
 
     return (
         <View style={styles.container}>
@@ -63,7 +60,7 @@ export default function Chat({ route }) {
                 inverted={true}
                 data={messages}
                 style={{ flex: 1, paddingHorizontal: '5%' }}
-                renderItem={({ item }) => <Item item={item} />}
+                renderItem={({ item }) => <Message item={item} />}
             />
 
             <View style={styles.inpContainer}>
@@ -90,7 +87,7 @@ export default function Chat({ route }) {
 
                     {
                         loadingsSendMessage ?
-                            <LoagingSendMessage />
+                            <LoadingSendMessage />
                             :
                             <TouchableOpacity
                                 activeOpacity={0.9}
@@ -106,87 +103,6 @@ export default function Chat({ route }) {
     );
 }
 
-function LoagingSendMessage() {
-
-    const { loadingsSendMessage } = useContext(ChatContext)
-
-    const xLeftBubble = useRef(new Animated.Value(-100))
-    const xMiddleBubble = useRef(new Animated.Value(-70))
-    const xRightBubble = useRef(new Animated.Value(-40))
-
-    const runLoadinAnimation = useRef(
-        Animated.loop(
-            Animated.parallel([
-                Animated.timing(xRightBubble.current, {
-                    toValue: 45,
-                    duration: 1.8 * 1000,
-                    useNativeDriver: true,
-                    delay: 100
-                }),
-                Animated.timing(xMiddleBubble.current, {
-                    toValue: 45,
-                    duration: 1.8 * 1000,
-                    useNativeDriver: true,
-                    delay: 200
-                }),
-                Animated.timing(xLeftBubble.current, {
-                    toValue: 45,
-                    duration: 1.8 * 1000,
-                    useNativeDriver: true,
-                    delay: 300
-                }),
-            ])
-        )
-    ).current
-            console.log(loadingsSendMessage)
-
-    useEffect(() => loadingsSendMessage ? runLoadinAnimation.start() : xLeftBubble.setValue(0), [loadingsSendMessage])
-
-    return <View style={[styles.btnSendMessage, { flexDirection: 'row', justifyContent: 'space-evenly' }]} >
-        <Animated.View style={[styles.loading, { transform: [{ translateX: xLeftBubble.current }] }]} />
-        <Animated.View style={[styles.loading, { transform: [{ translateX: xMiddleBubble.current }] }]} />
-        <Animated.View style={[styles.loading, { transform: [{ translateX: xRightBubble.current }] }]} />
-    </View>
-}
-
-function Item({ item }) {
-    const { userInfo } = useContext(AuthContext)
-    const { getMessage } = useContext(ChatContext)
-    const [isMyMessage, setIsMyMessage] = useState(true)
-    const [owner, setOwner] = useState('')
-    const [photo, setPhoto] = useState('https://img.favpng.com/7/5/8/computer-icons-font-awesome-user-font-png-favpng-YMnbqNubA7zBmfa13MK8WdWs8.jpg')
-
-    useEffect(() => {
-
-        setIsMyMessage(item.uid == userInfo.uid)
-        let { owner: ownerMessage, photo: avatar } = getMessage(item.uid)
-        setOwner(ownerMessage)
-        setPhoto(avatar)
-
-    }, [item])
-
-
-    return (
-        <View style={
-            [styles.mensagem, {
-                justifyContent: isMyMessage ? 'flex-end' : 'flex-start',
-                marginVertical: isMyMessage ? 4 : 10
-            }]}>
-            {
-                !isMyMessage &&
-                (<Image
-                    source={{ uri: photo }}
-                    style={styles.img}
-                />)
-            }
-            <View >
-                {!isMyMessage && <Text style={styles.owner}>{owner}</Text>}
-                {item.tipo === 'texto' && <Text>{item.texto}</Text>}
-                {item.tipo === 'imagem' && <Image source={{ uri: item.imagemURL }} style={styles.imagemAsMessage} />}
-            </View>
-        </View>
-    )
-}
 
 const styles = StyleSheet.create({
     container: {
@@ -206,13 +122,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 20
-    },
-    mensagem: {
-        width: '100%',
-        flexDirection: 'row',
-        alignItems: 'center',
-
-    },
+    }, 
     inp: {
     },
     inpContainer: {
@@ -220,23 +130,13 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginHorizontal: '5%',
         marginBottom: '3%',
+        marginTop: '5%',
         paddingLeft: 20,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 15,
         maxHeight: 200
-    },
-    img: {
-        width: 30,
-        height: 30,
-        marginRight: 10,
-        borderRadius: 15,
-        resizeMode: 'cover'
-
-    },
-    owner: {
-        color: '#48CAE4'
     },
     btnSendMessage: {
         width: '50%',
@@ -258,17 +158,5 @@ const styles = StyleSheet.create({
         height: '100%',
         alignItems: 'center'
     },
-    imagemAsMessage: {
-        width: Dimensions.get('screen').width / 2,
-        height: Dimensions.get('screen').height / 3,
-        borderRadius: 10,
-        resizeMode: 'cover',
-
-    },
-    loading: {
-        backgroundColor: '#fff',
-        height: '20%',
-        width: '20%',
-        borderRadius: 20
-    }
+    
 })

@@ -31,11 +31,13 @@ export default function ChatProvider({ children }) {
 
     async function getChats() {
         var chatsData = [await getGlobalChat()]
+        console.log(isUserLogged)
         if (isUserLogged) {
             let data = await firestore()
                 .collection('chats')
                 .where('integrantes', 'array-contains', userInfo.uid)
                 .get()
+
             data?.docs?.forEach(i => {
                 let data = {
                     ...i.data(),
