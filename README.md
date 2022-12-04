@@ -20,7 +20,7 @@ Aqui está as tecnologias usadas no projeto
 
 ## Como usar
 
-  ![video](bl-zap/github/animacao.gif)
+  ![video](blzap/github/animacao.gif)
 
 ## Funcionalidades
 
